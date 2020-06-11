@@ -1,3 +1,12 @@
+/**
+ * @file    xbee_pro.h
+ * @author  lddddd
+ * @brief   xbee pro s2c组网通信
+ * @details
+ * @note
+ * @date    2020.6.11
+ * @version 1.0
+ */
 #ifndef COMMUNICATION_XBEE_PRO_H_
 #define COMMUNICATION_XBEE_PRO_H_
 
@@ -143,21 +152,6 @@ void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
 
 void XbeePro::XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id)
 {
-//     Example:
-//     unsigned char start_delimiter_;      //7E                                0
-//     unsigned char length_[2];            //00 1A     ***                     1 2
-//     unsigned char frame_type_;           //11                                3
-//     unsigned char frame_id_;             //00                                4
-//     unsigned char dest_address_64_[8];   //00 13 A2 00 41 5A B7 68      ***  5 6 7 8 9 10 11 12
-//     unsigned char dest_address_16_[2];   //FF FE                             13 14
-//     unsigned char source_endpoint_;      //E8                                15
-//     unsigned char destination_endpoint_; //E8                                16
-//     unsigned char cluster_id_[2];        //00 11                             17 18
-//     unsigned char profile_id_[2];        //C1 05                             19 20
-//     unsigned char broadcast_radius_;     //00                                21
-//     unsigned char options_;              //00                                22
-//     unsigned char data_payload_[100];    //41 42 43 44 45 46   ***           23 24 25 26 27 28 ...
-//     unsigned char check_sum_;            //46       ***                      end
     unsigned char data_buf[100] = {0};
     int frame_length = 58;//固定长度frame_length~check_sum
     data_buf[0] = 0x7E;
@@ -220,19 +214,6 @@ void XbeePro::XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest
 
 void XbeePro::XbeeFrameRead(CommunicationData* _data)
 {
-//     Example:
-//     unsigned char start_delimiter_;      //7E                        0
-//     unsigned char length_[2];            //00 18                     1 2
-//     unsigned char frame_type_;           //91                        3
-//     unsigned char dest_address_64_[8];   //00 13 A2 00 41 5A B7 68   4 5 6 7 8 9 10 11
-//     unsigned char dest_address_16_[2];   //FF FE                     12 13
-//     unsigned char source_endpoint_;      //E8                        14
-//     unsigned char destination_endpoint_; //E8                        15
-//     unsigned char cluster_id_[2];        //00 11                     16 17
-//     unsigned char profile_id_[2];        //C1 05                     18 19
-//     unsigned char receive_options_;      //00                        20
-//     unsigned char receive_data_[100];    //41 42 43 44 45 46         21 22 23 24 25 26...
-//     unsigned char check_sum_;            //C6                        end
     unsigned char data_buf[100] = {0};
     int frame_length;
     static int error_cnt;

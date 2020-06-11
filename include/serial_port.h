@@ -1,3 +1,12 @@
+/**
+ * @file    serial_port.h
+ * @author  lddddd
+ * @brief   linux串口配置
+ * @details
+ * @note
+ * @date    2020.6.11
+ * @version 1.0
+ */
 #ifndef COMMUNICATION_SERIAL_PORT_H_
 #define COMMUNICATION_SERIAL_PORT_H_
 
