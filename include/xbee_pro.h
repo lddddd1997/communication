@@ -2,13 +2,13 @@
 #define COMMUNICATION_XBEE_PRO_H_
 
 #include "serial_port.h"
-struct CommunicationData    //机间数据
+struct CommunicationData         //机间数据
 {
-    int uav_id_;             //无人机ID
+    int uav_id_;                 //无人机ID
 
-    int task_target_id_;     //目标编号
-    int task_flag_;          //标志位（0为编队或搜索，1为执行任务）
-    int task_type_;          //任务类型
+    int task_target_id_;         //目标编号
+    int task_flag_;              //标志位（0为编队或搜索，1为执行任务）
+    int task_type_;              //任务类型
 
     float pos_uav_[3];           //无人机位置信息 x y z
     float yaw_uav_;              //无人机偏航
@@ -22,7 +22,7 @@ struct CommunicationData    //机间数据
     int target_find_uav_id_;     //发现者
     int num_change_;             //数字改变
 
-    int assign_array_[9];           //分配情况（3*3矩阵，每个目标分配的无人机情况）
+    int assign_array_[9];        //分配情况（3*3矩阵，每个目标分配的无人机情况）
 
 };
 
