@@ -298,7 +298,7 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 
             PrintCommunicationData(_data);
 
-            std::cout << "read period: " << read_time - ros::Time().now().sec - ros::Time().now().nsec / 1e9 << "s" << std::endl;
+            std::cout << "read period: " <<  ros::Time().now().sec + ros::Time().now().nsec / 1e9 - read_time << " [s]" << std::endl;
 
             read_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
 
