@@ -10,11 +10,11 @@ struct CommunicationData    //机间数据
     int task_flag_;          //标志位（0为编队或搜索，1为执行任务）
     int task_type_;          //任务类型
 
-    float pos_uav_[3];    //无人机位置信息 x y z
+    float pos_uav_[3];           //无人机位置信息 x y z
     float yaw_uav_;              //无人机偏航
 
     int target_id_;              //目标ID
-    float pos_target_[3]; //目标信息 x y v 
+    float pos_target_[3];        //目标信息 x y v 
     float yaw_target_;           //目标偏航
     int num_;                    //车身数字
     int num_side_;               //数字在哪一侧
@@ -109,7 +109,7 @@ void XbeePro::PrintCommunicationData(const CommunicationData* const _data)
 void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
 {
     CommunicationData UavData;
-    UavData.uav_id_ = 5;
+    UavData.uav_id_ = 0;
     UavData.task_target_id_ = 2;
     UavData.task_flag_ = 1;
     UavData.task_type_ = 1;
@@ -136,7 +136,9 @@ void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
     UavData.assign_array_[6] = 2;
     UavData.assign_array_[7] = 1;
     UavData.assign_array_[8] = 0;
+    XbeeFrameWrite(&UavData, 1);    //往3号无人机发送
     XbeeFrameWrite(&UavData, 3);    //往3号无人机发送
+
 }
 
 void XbeePro::XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id)
@@ -233,8 +235,10 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 //     unsigned char check_sum_;            //C6                        end
     unsigned char data_buf[100] = {0};
     int frame_length;
+    static int error_cnt;
     while(true)
     {
+        std::cout << "error_cnt: " << error_cnt<< std::endl;
         if(DataRead(data_buf, 1))
         {
             if(data_buf[0] == 0x7E)
@@ -257,11 +261,13 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
             else
             {
                 ROS_ERROR_STREAM("Data Read Error Head !");
+                return ;
                 // fcntl(serial_, F_SETFL, FNDELAY);    //设置为非阻塞
             }
         }
         else
         {
+            ++error_cnt;
             ROS_ERROR_STREAM("Data Read Error Timeout 1 !");
             return ;
         }
