@@ -142,6 +142,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(communication src/communication.cpp)
+add_executable(xbee_read src/xbee_read.cpp)
+add_executable(xbee_write src/xbee_write.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,6 +157,14 @@ add_executable(communication src/communication.cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(communication
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(xbee_read
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(xbee_write
    ${catkin_LIBRARIES}
  )
 
