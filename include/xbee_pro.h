@@ -11,6 +11,8 @@
 #define COMMUNICATION_XBEE_PRO_H_
 
 #include "serial_port.h"
+namespace lddddd
+{
 struct CommunicationData         //机间数据
 {
     int uav_id_;                 //无人机ID
@@ -326,6 +328,8 @@ xbee_address_(
 
 XbeePro::~XbeePro()
 {
+
+}
 
 }
 
