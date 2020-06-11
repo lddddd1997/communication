@@ -147,7 +147,8 @@ void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
     UavData.assign_array_[6] = 2;
     UavData.assign_array_[7] = 1;
     UavData.assign_array_[8] = 0;
-    XbeeFrameWrite(&UavData, 1);    //往3号无人机发送
+    // XbeeFrameWrite(&UavData, 1);    //往3号无人机发送
+    // XbeeFrameWrite(&UavData, 2);    //往3号无人机发送
     XbeeFrameWrite(&UavData, 3);    //往3号无人机发送
 
 }
@@ -218,10 +219,9 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 {
     unsigned char data_buf[100] = {0};
     int frame_length;
-    static int error_cnt;
+    static double read_time;
     while(true)
     {
-        std::cout << "error_cnt: " << error_cnt<< std::endl;
         if(DataRead(data_buf, 1))
         {
             if(data_buf[0] == 0x7E)
@@ -250,7 +250,6 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
         }
         else
         {
-            ++error_cnt;
             ROS_ERROR_STREAM("Data Read Error Timeout 1 !");
             return ;
         }
@@ -298,6 +297,11 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
             _data->assign_array_[8] = ((data_buf[53] & (unsigned char)(0x06 << 6)) >> 6) | ((data_buf[54] & (unsigned char)(0x01 << 7)) >> 7);
 
             PrintCommunicationData(_data);
+
+            std::cout << "read period: " << read_time - ros::Time().now().sec - ros::Time().now().nsec / 1e9 << "s" << std::endl;
+
+            read_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
+
             // fcntl(serial_, F_SETFL, FNDELAY);    //设置为非阻塞
         }
         else

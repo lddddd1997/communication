@@ -110,8 +110,8 @@ Serial::Serial(const std::string _name, const int _baud_rate) :
   options.c_iflag &= ~(INLCR | ICRNL | IGNCR);
   options.c_oflag &= ~(ONLCR | OCRNL);
 
-  options.c_cc[VTIME] = 1;    //Set timeout of 5*0.1 seconds
-  options.c_cc[VMIN] = 0;    //超时则返回0，不设置时，非阻塞会返回-1
+  // options.c_cc[VTIME] = 1;    //Set timeout of 5*0.1 seconds
+  // options.c_cc[VMIN] = 0;    //超时则返回0，不设置时，非阻塞会返回-1
 
   if(tcsetattr(serial_, TCSANOW, &options) != 0){
     ROS_ERROR_STREAM("Can't set serial port options!");
@@ -131,7 +131,7 @@ bool Serial::DataRead(unsigned char* _buf, const int _nRead)
   while(total != _nRead)
   {
     ret = read(serial_, _buf + total, (_nRead - total));
-    if(ret == 0)    //Timeout
+    if(ret < 0)    //Timeout
     {
       return false;
     }
@@ -147,7 +147,7 @@ bool Serial::DataWrite(const unsigned char* _buf, const int _nWrite)
   while(total != _nWrite)
   {
     ret = write(serial_, _buf + total, (_nWrite - total));
-    if(ret == 0)    //Timeout
+    if(ret < 0)    //Timeout
     {
       return false;
     }
