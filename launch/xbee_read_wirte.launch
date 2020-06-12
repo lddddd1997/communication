@@ -1,6 +1,6 @@
 <launch>
     <group ns="xbee_communication">
       <node pkg="communication" type="xbee_write" name="xbee_write" output="screen" />
-      <node pkg="communication" type="xbee_read" name="gcs_setting" output="screen" />
+      <node pkg="communication" type="xbee_read" name="xbee_read" output="screen" />
     </group>
 </launch>
