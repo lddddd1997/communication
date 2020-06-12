@@ -84,13 +84,15 @@ public:
     ~XbeePro();
     void XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id);
     void XbeeFrameRead(CommunicationData* _data);
-    void LoopTimerCallback(const ros::TimerEvent& _event);
     friend std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data);
     // void PrintCommunicationData(const CommunicationData* const _data);
 
 private:
     ros::NodeHandle nh_;
+    ros::Timer loop_timer_;
     const unsigned char xbee_address_[5][8];
+
+    void LoopTimerCallback(const ros::TimerEvent& _event);
 };
 
 std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data)
@@ -358,39 +360,44 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 }
 
 XbeePro::XbeePro(const std::string _name, const int _baud_rate, Mode _mode, const ros::NodeHandle& _nh) : Serial(_name, _baud_rate), nh_(_nh),
-xbee_address_
-{
-    {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x62},//   0
-    {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68},//   1
-    {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x6A},//   2
-    {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x77},//   3
-    {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68} //   4
-}
+                                                                                                        xbee_address_
+                                                                                                        {
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x62},//   0
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68},//   1
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x6A},//   2
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x77},//   3
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68} //   4
+                                                                                                        }
 {
     double period;
     nh_.param("/read_period", period, 0.08);
-    switch(_mode)
-    {
-        case(RDWR):
-        {
-            ros::Timer loop_timer = _nh.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
-            break;
-        }
-        case(O_RD):
-        {
-            break;
-        }
-        case(O_WR):
-        {
-            ros::Timer loop_timer = _nh.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
+    loop_timer_ = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
 
+    // switch(_mode)
+    // {
+    //     case(RDWR):
+    //     {
+    //         ros::Timer loop_timer = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
+    //         std::cout << "aaa" << std::endl;
+    //         break;
+    //     }
+    //     case(O_RD):
+    //     {
+    //         std::cout << "bbb" << std::endl;
+    //         break;
+    //     }
+    //     case(O_WR):
+    //     {
+    //         ros::Timer loop_timer = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
+    //         std::cout << "ccc" << std::endl;
+    //         break;
+    //     }
+    //     default:
+    //     {
+    //         std::cout << "ddd" << std::endl;
+    //         break;
+    //     }
+    // }
 }
 
 XbeePro::~XbeePro()
