@@ -6,13 +6,11 @@ int main(int argc, char** argv)
     ros::NodeHandle nh("~");
     lddddd::XbeePro XbeePro("/dev/ttyUSB0", 115200, lddddd::XbeePro::RDWR, nh);
 
-    lddddd::CommunicationData CooperationData;
     while(ros::ok())
     {
-        XbeePro.XbeeFrameRead(&CooperationData);
+        XbeePro.TaskRun();
     }
 
-    XbeePro.Serial::ClosePort();
     return 0;
 }
 

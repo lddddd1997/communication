@@ -82,17 +82,21 @@ public:
 
     XbeePro(const std::string _name, const int _baud_rate, Mode _mode, const ros::NodeHandle& _nh);
     ~XbeePro();
-    void XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id);
-    void XbeeFrameRead(CommunicationData* _data);
+    void TaskRun(void);
     friend std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data);
-    // void PrintCommunicationData(const CommunicationData* const _data);
 
 private:
     ros::NodeHandle nh_;
     ros::Timer loop_timer_;
     const unsigned char xbee_address_[5][8];
 
+    void (*FunctionPointer_)(void);    
+    void CyclicRead(void);
+    void CyclicSpin(void);
+
     void LoopTimerCallback(const ros::TimerEvent& _event);
+    void XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id);
+    void XbeeFrameRead(CommunicationData* _data);
 };
 
 std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data)
@@ -126,38 +130,6 @@ std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data)
     _out << "assign_array_[7]:  " << _data.assign_array_[7] << std::endl;
     _out << "assign_array_[8]:  " << _data.assign_array_[8] << std::endl;
 }
-
-// void XbeePro::PrintCommunicationData(const CommunicationData* const _data)
-// {
-//     ROS_INFO("~~~~~~~~~~~~~~~~~~~~~~~~Reception~~~~~~~~~~~~~~~~~~~~~~~~\n");
-//     std::cout << "uav_id_:  " << _data->uav_id_ << std::endl;
-//     std::cout << "task_target_id_:  " << _data->task_target_id_ << std::endl;
-//     std::cout << "task_flag_:  " << _data->task_flag_ << std::endl;
-//     std::cout << "task_type_:  " << _data->task_type_ << std::endl;
-//     std::cout << "pos_uav_x_:  " << _data->pos_uav_[0] << std::endl;
-//     std::cout << "pos_uav_y_:  " << _data->pos_uav_[1] << std::endl;
-//     std::cout << "pos_uav_z_:  " << _data->pos_uav_[2] << std::endl;
-//     std::cout << "yaw_uav_:  " << _data->yaw_uav_ << std::endl;
-//     std::cout << "target_id_:  " << _data->target_id_ << std::endl;
-//     std::cout << "pos_target_x_:  " << _data->pos_target_[0] << std::endl;
-//     std::cout << "pos_target_y_:  " << _data->pos_target_[1] << std::endl;
-//     std::cout << "pos_target_z_:  " << _data->pos_target_[2] << std::endl;
-//     std::cout << "yaw_target_:  " << _data->yaw_target_ << std::endl;
-//     std::cout << "num_:  " << _data->num_ << std::endl;
-//     std::cout << "num_side_:  " << _data->num_side_ << std::endl;
-//     std::cout << "target_find_:  " << _data->target_find_ << std::endl;
-//     std::cout << "target_find_uav_id_:  " << _data->target_find_uav_id_ << std::endl;
-//     std::cout << "num_change_:  " << _data->num_change_ << std::endl;
-//     std::cout << "assign_array_[0]:  " << _data->assign_array_[0] << std::endl;
-//     std::cout << "assign_array_[1]:  " << _data->assign_array_[1] << std::endl;
-//     std::cout << "assign_array_[2]:  " << _data->assign_array_[2] << std::endl;
-//     std::cout << "assign_array_[3]:  " << _data->assign_array_[3] << std::endl;
-//     std::cout << "assign_array_[4]:  " << _data->assign_array_[4] << std::endl;
-//     std::cout << "assign_array_[5]:  " << _data->assign_array_[5] << std::endl;
-//     std::cout << "assign_array_[6]:  " << _data->assign_array_[6] << std::endl;
-//     std::cout << "assign_array_[7]:  " << _data->assign_array_[7] << std::endl;
-//     std::cout << "assign_array_[8]:  " << _data->assign_array_[8] << std::endl;
-// }
 
 void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
 {
@@ -193,6 +165,24 @@ void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
     // XbeeFrameWrite(&UavData, 2);    //往3号无人机发送
     XbeeFrameWrite(&UavData, 3);    //往3号无人机发送
 
+}
+
+void XbeePro::CyclicRead(void)
+{
+    lddddd::CommunicationData CooperationData;
+
+    XbeeFrameRead(&CooperationData);
+}
+
+void XbeePro::CyclicSpin(void)
+{
+    ros::spin();
+}
+
+void XbeePro::TaskRun(void)
+{
+    // (*FunctionPoint_)();
+    FunctionPointer_();
 }
 
 void XbeePro::XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id)
@@ -371,33 +361,33 @@ XbeePro::XbeePro(const std::string _name, const int _baud_rate, Mode _mode, cons
 {
     double period;
     nh_.param("/read_period", period, 0.08);
-    loop_timer_ = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
+    // loop_timer_ = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
 
-    // switch(_mode)
-    // {
-    //     case(RDWR):
-    //     {
-    //         ros::Timer loop_timer = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
-    //         std::cout << "aaa" << std::endl;
-    //         break;
-    //     }
-    //     case(O_RD):
-    //     {
-    //         std::cout << "bbb" << std::endl;
-    //         break;
-    //     }
-    //     case(O_WR):
-    //     {
-    //         ros::Timer loop_timer = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
-    //         std::cout << "ccc" << std::endl;
-    //         break;
-    //     }
-    //     default:
-    //     {
-    //         std::cout << "ddd" << std::endl;
-    //         break;
-    //     }
-    // }
+    switch(_mode)
+    {
+        case(RDWR):
+        {
+            FunctionPointer_ = &lddddd::XbeePro::CyclicRead;
+            loop_timer_ = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
+            break;
+        }
+        case(O_RD):
+        {
+            FunctionPointer_ = &CyclicRead;
+            break;
+        }
+        case(O_WR):
+        {
+            FunctionPointer_ = &CyclicSpin;
+            loop_timer_ = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
+            break;
+        }
+        default:
+        {
+
+            break;
+        }
+    }
 }
 
 XbeePro::~XbeePro()
