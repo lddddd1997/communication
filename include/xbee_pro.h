@@ -1,19 +1,24 @@
-/**
- * @file    xbee_pro.h
- * @author  lddddd
- * @brief   xbee pro s2c组网通信
- * @details
- * @note
- * @date    2020.6.11
- * @version 1.0
- */
+/** 
+* @file     xbee_pro.h
+* @brief    xbee pro s2c组网通信
+* @details  
+* @note
+* @author   lddddd
+*           Email: lddddd1997@gmail.com
+* @date     2020.6.11 
+* @version  1.1 
+* @par      Edit history:          
+*           1.0: lddddd, 2020.6.11, Achieve communicaiton between Modules.
+*           1.1: lddddd, 2020.6.13, Add function pointer to achieve polymorphism.
+*/
+
 #ifndef COMMUNICATION_XBEE_PRO_H_
 #define COMMUNICATION_XBEE_PRO_H_
 
 #include "serial_port.h"
 namespace lddddd
 {
-struct CommunicationData         //机间数据
+struct CommunicationData         //机间通信数据
 {
     int uav_id_;                 //无人机ID
 
@@ -257,7 +262,6 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
         {
             if(data_buf[0] == 0x7E)
             {
-                // fcntl(serial_, F_SETFL, 0);    //设置为阻塞
                 if(DataRead(data_buf, 3))
                 {
                     if(data_buf[0] == 0x00 && data_buf[2] == 0x91)
@@ -276,7 +280,6 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
             {
                 ROS_ERROR_STREAM("Data Read Error Head !");
                 return ;
-                // fcntl(serial_, F_SETFL, FNDELAY);    //设置为非阻塞
             }
         }
         else
@@ -334,11 +337,9 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 
             read_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
 
-            // fcntl(serial_, F_SETFL, FNDELAY);    //设置为非阻塞
         }
         else
         {
-            // fcntl(serial_, F_SETFL, FNDELAY);    //设置为非阻塞
             ROS_ERROR_STREAM("Data Read Error In Data Read Sum Check !");
         }
     }
