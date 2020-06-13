@@ -9,6 +9,7 @@ int main(int argc, char** argv)
     while(ros::ok())
     {
         XbeePro.TaskRun();
+        // (XbeePro.*(XbeePro.FunctionPointer_))();
     }
 
     return 0;

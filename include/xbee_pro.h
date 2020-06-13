@@ -85,15 +85,15 @@ public:
     void TaskRun(void);
     friend std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data);
 
+
 private:
     ros::NodeHandle nh_;
     ros::Timer loop_timer_;
     const unsigned char xbee_address_[5][8];
-
-    void (*FunctionPointer_)(void);    
+   
     void CyclicRead(void);
     void CyclicSpin(void);
-
+    void (XbeePro::*FunctionPointer_)(void); 
     void LoopTimerCallback(const ros::TimerEvent& _event);
     void XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id);
     void XbeeFrameRead(CommunicationData* _data);
@@ -181,8 +181,7 @@ void XbeePro::CyclicSpin(void)
 
 void XbeePro::TaskRun(void)
 {
-    // (*FunctionPoint_)();
-    FunctionPointer_();
+    (this->*FunctionPointer_)();
 }
 
 void XbeePro::XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id)
@@ -373,12 +372,12 @@ XbeePro::XbeePro(const std::string _name, const int _baud_rate, Mode _mode, cons
         }
         case(O_RD):
         {
-            FunctionPointer_ = &CyclicRead;
+            FunctionPointer_ = &lddddd::XbeePro::CyclicRead;
             break;
         }
         case(O_WR):
         {
-            FunctionPointer_ = &CyclicSpin;
+            FunctionPointer_ = &lddddd::XbeePro::CyclicSpin;
             loop_timer_ = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
             break;
         }
