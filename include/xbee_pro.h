@@ -95,7 +95,8 @@ private:
     ros::NodeHandle nh_;
     ros::Timer loop_timer_;
     const unsigned char xbee_address_[5][8];
-   
+
+    void CyclicRdWr(void);
     void CyclicRead(void);
     void CyclicSpin(void);
     void (XbeePro::*FunctionPointer_)(void); 
@@ -138,6 +139,7 @@ std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data)
 
 void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
 {
+    static int send_count;
     CommunicationData UavData;
     UavData.uav_id_ = 0;
     UavData.task_target_id_ = 2;
@@ -166,10 +168,35 @@ void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
     UavData.assign_array_[6] = 2;
     UavData.assign_array_[7] = 1;
     UavData.assign_array_[8] = 0;
-    // XbeeFrameWrite(&UavData, 1);    //往3号无人机发送
-    // XbeeFrameWrite(&UavData, 2);    //往3号无人机发送
-    XbeeFrameWrite(&UavData, 3);    //往3号无人机发送
+    if(send_count < 100)
+    {
+        // tcflush(serial_, TCOFLUSH);
+        XbeeFrameWrite(&UavData, 0);    //往0号无人机发送
+        XbeeFrameWrite(&UavData, 1);    //往1号无人机发送
+        // XbeeFrameWrite(&UavData, 2);    //往2号无人机发送
+        // XbeeFrameWrite(&UavData, 3);    //往3号无人机发送
+        ROS_INFO("send count: %d ", ++send_count);
+        static double write_time;
+        std::cout << "write period: " <<  ros::Time().now().sec + ros::Time().now().nsec / 1e9 - write_time << " [s]" << std::endl;
+        write_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
+    }
 
+    // ros::Rate(100).sleep();
+    // XbeeFrameWrite(&UavData, 1);    //往1号无人机发送
+    // ros::Rate(100).sleep();
+    // XbeeFrameWrite(&UavData, 2);    //往2号无人机发送
+    // ros::Rate(100).sleep();
+    // XbeeFrameWrite(&UavData, 3);    //往3号无人机发送
+    // XbeeFrameWrite(&UavData, 4);    //往4号无人机发送
+}
+
+void XbeePro::CyclicRdWr(void)
+{
+    lddddd::CommunicationData CooperationData;
+
+    XbeeFrameRead(&CooperationData);
+
+    ros::spinOnce();
 }
 
 void XbeePro::CyclicRead(void)
@@ -256,8 +283,10 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
     unsigned char data_buf[100] = {0};
     int frame_length;
     static double read_time;
+    static int error_count;
     while(true)
     {
+        // ROS_INFO("error count: %d  ", error_count);
         if(DataRead(data_buf, 1))
         {
             if(data_buf[0] == 0x7E)
@@ -284,7 +313,8 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
         }
         else
         {
-            ROS_ERROR_STREAM("Data Read Error Timeout 1 !");
+            // ++error_count;
+            // ROS_ERROR_STREAM("Data Read Error Timeout 1 !");
             return ;
         }
     }
@@ -330,11 +360,11 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 
             _data->assign_array_[8] = ((data_buf[53] & (unsigned char)(0x06 << 6)) >> 6) | ((data_buf[54] & (unsigned char)(0x01 << 7)) >> 7);
 
-            std::cout << *_data << std::endl;
-            // PrintCommunicationData(_data);
+            // std::cout << *_data << std::endl;
+            static int receive_count;
+            ROS_INFO("receive count: %d ", ++receive_count);
 
             std::cout << "read period: " <<  ros::Time().now().sec + ros::Time().now().nsec / 1e9 - read_time << " [s]" << std::endl;
-
             read_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
 
         }
@@ -353,21 +383,20 @@ XbeePro::XbeePro(const std::string _name, const int _baud_rate, Mode _mode, cons
                                                                                                         xbee_address_
                                                                                                         {
                                                                                                             {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x62},//   0
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68},//   1
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x6A},//   2
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x77},//   3
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68} //   4
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x64},//   1
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68},//   2
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x6A},//   3
+                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x77} //   4
                                                                                                         }
 {
     double period;
-    nh_.param("/read_period", period, 0.08);
-    // loop_timer_ = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
+    nh_.param("/read_period", period, 0.1);
 
     switch(_mode)
     {
         case(RDWR):
         {
-            FunctionPointer_ = &lddddd::XbeePro::CyclicRead;
+            FunctionPointer_ = &lddddd::XbeePro::CyclicRdWr;
             loop_timer_ = nh_.createTimer(ros::Duration(period), &lddddd::XbeePro::LoopTimerCallback, this);
             break;
         }
@@ -384,7 +413,6 @@ XbeePro::XbeePro(const std::string _name, const int _baud_rate, Mode _mode, cons
         }
         default:
         {
-
             break;
         }
     }

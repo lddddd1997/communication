@@ -57,7 +57,9 @@ Serial::Serial(const std::string _name, const int _baud_rate) :
     ROS_ERROR_STREAM("Can't get serial port sets!");
     exit(0);
   }
-  tcflush(serial_, TCIFLUSH);
+  tcflush(serial_, TCIFLUSH);//        TCIFLUSH      清空输入队列
+                             //         TCOFLUSH     清空输出队列
+                             //         TCIOFLUSH    同时清空输入和输出队列
   switch(_baud_rate)
   {
     case 921600:
