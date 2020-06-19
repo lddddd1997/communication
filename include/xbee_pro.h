@@ -139,9 +139,8 @@ std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data)
 
 void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
 {
-    static int send_count;
     CommunicationData UavData;
-    UavData.uav_id_ = 0;
+    UavData.uav_id_ = 1;
     UavData.task_target_id_ = 2;
     UavData.task_flag_ = 1;
     UavData.task_type_ = 1;
@@ -168,26 +167,13 @@ void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
     UavData.assign_array_[6] = 2;
     UavData.assign_array_[7] = 1;
     UavData.assign_array_[8] = 0;
-    if(send_count < 100)
-    {
-        // tcflush(serial_, TCOFLUSH);
-        XbeeFrameWrite(&UavData, 0);    //往0号无人机发送
-        XbeeFrameWrite(&UavData, 1);    //往1号无人机发送
-        // XbeeFrameWrite(&UavData, 2);    //往2号无人机发送
-        // XbeeFrameWrite(&UavData, 3);    //往3号无人机发送
-        ROS_INFO("send count: %d ", ++send_count);
-        static double write_time;
-        std::cout << "write period: " <<  ros::Time().now().sec + ros::Time().now().nsec / 1e9 - write_time << " [s]" << std::endl;
-        write_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
-    }
 
-    // ros::Rate(100).sleep();
-    // XbeeFrameWrite(&UavData, 1);    //往1号无人机发送
-    // ros::Rate(100).sleep();
-    // XbeeFrameWrite(&UavData, 2);    //往2号无人机发送
-    // ros::Rate(100).sleep();
-    // XbeeFrameWrite(&UavData, 3);    //往3号无人机发送
-    // XbeeFrameWrite(&UavData, 4);    //往4号无人机发送
+    static double write_time;
+    std::cout << "write period: " <<  ros::Time().now().sec + ros::Time().now().nsec / 1e9 - write_time << " [s]" << std::endl;
+    write_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
+
+    XbeeFrameWrite(&UavData, 0);    //往0号无人机发送
+    XbeeFrameWrite(&UavData, 4);    //往4号无人机发送
 }
 
 void XbeePro::CyclicRdWr(void)
@@ -282,11 +268,8 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 {
     unsigned char data_buf[100] = {0};
     int frame_length;
-    static double read_time;
-    static int error_count;
     while(true)
     {
-        // ROS_INFO("error count: %d  ", error_count);
         if(DataRead(data_buf, 1))
         {
             if(data_buf[0] == 0x7E)
@@ -313,7 +296,6 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
         }
         else
         {
-            // ++error_count;
             // ROS_ERROR_STREAM("Data Read Error Timeout 1 !");
             return ;
         }
@@ -360,13 +342,18 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 
             _data->assign_array_[8] = ((data_buf[53] & (unsigned char)(0x06 << 6)) >> 6) | ((data_buf[54] & (unsigned char)(0x01 << 7)) >> 7);
 
-            // std::cout << *_data << std::endl;
+            std::cout << *_data << std::endl;
+            static double read_time;
+            static double read_period;
             static int receive_count;
+
+            if(_data->uav_id_ == 0)
+            {
+                read_period = ros::Time().now().sec + ros::Time().now().nsec / 1e9 - read_time;
+                read_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
+            }
             ROS_INFO("receive count: %d ", ++receive_count);
-
-            std::cout << "read period: " <<  ros::Time().now().sec + ros::Time().now().nsec / 1e9 - read_time << " [s]" << std::endl;
-            read_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
-
+            std::cout << "read period: " << read_period << " [s]" << std::endl;
         }
         else
         {
