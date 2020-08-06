@@ -85,23 +85,28 @@ public:
         O_WR = 2u
     };
 
-    XbeePro(const std::string _name, const int _baud_rate, Mode _mode, const ros::NodeHandle& _nh);
+    XbeePro(Mode _mode, const ros::NodeHandle& _nh);
     ~XbeePro();
     void TaskRun(void);
     friend std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data);
 
-
 private:
     ros::NodeHandle nh_;
     ros::Timer loop_timer_;
+    ros::Subscriber uav_local_position_sub_;
+    geometry_msgs::Vector3 local_position_uav_;
     const unsigned char xbee_address_[5][8];
+    CommunicationData communication_data_[5];
+    int own_uav_id_;
+    int send_uav_mask_;
 
     void CyclicRdWr(void);
     void CyclicRead(void);
     void CyclicSpin(void);
     void (XbeePro::*FunctionPointer_)(void); 
     void LoopTimerCallback(const ros::TimerEvent& _event);
-    void XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id);
+    void UavPositionCallback(const geometry_msgs::PoseStamped::ConstPtr& _msg);
+    void XbeeFrameWrite(const CommunicationData* _data, int _uav_dest_id);
     void XbeeFrameRead(CommunicationData* _data);
 };
 
@@ -139,57 +144,73 @@ std::ostream& operator<<(std::ostream& _out, const CommunicationData& _data)
 
 void XbeePro::LoopTimerCallback(const ros::TimerEvent& _event)
 {
-    CommunicationData UavData;
-    UavData.uav_id_ = 1;
-    UavData.task_target_id_ = 2;
-    UavData.task_flag_ = 1;
-    UavData.task_type_ = 1;
-    UavData.pos_uav_[0] = 11.1;
-    UavData.pos_uav_[1] = 22.2;
-    UavData.pos_uav_[2] = 33.3;
-    UavData.yaw_uav_ = 3.14;
-    UavData.target_id_ = 2;
-    UavData.pos_target_[0] = 44.4;
-    UavData.pos_target_[1] = 55.5;
-    UavData.pos_target_[2] = 66.6;
-    UavData.yaw_target_ = 1.57;
-    UavData.num_ = 2;
-    UavData.num_side_ = 1;
-    UavData.target_find_ = 1;
-    UavData.target_find_uav_id_ = 2;
-    UavData.num_change_ = 1;
-    UavData.assign_array_[0] = 0;
-    UavData.assign_array_[1] = 1;
-    UavData.assign_array_[2] = 2;
-    UavData.assign_array_[3] = 3;
-    UavData.assign_array_[4] = 4;
-    UavData.assign_array_[5] = 3;
-    UavData.assign_array_[6] = 2;
-    UavData.assign_array_[7] = 1;
-    UavData.assign_array_[8] = 0;
+    CommunicationData uav_data;
+    uav_data.uav_id_ = own_uav_id_;
+    uav_data.task_target_id_ = 2;
+    uav_data.task_flag_ = 1;
+    uav_data.task_type_ = 1;
+    uav_data.pos_uav_[0] = local_position_uav_.x;
+    uav_data.pos_uav_[1] = local_position_uav_.y;
+    uav_data.pos_uav_[2] = local_position_uav_.y;
+    uav_data.yaw_uav_ = 3.14;
+    uav_data.target_id_ = 2;
+    uav_data.pos_target_[0] = 44.4;
+    uav_data.pos_target_[1] = 55.5;
+    uav_data.pos_target_[2] = 66.6;
+    uav_data.yaw_target_ = 1.57;
+    uav_data.num_ = 2;
+    uav_data.num_side_ = 1;
+    uav_data.target_find_ = 1;
+    uav_data.target_find_uav_id_ = 2;
+    uav_data.num_change_ = 1;
+    uav_data.assign_array_[0] = 0;
+    uav_data.assign_array_[1] = 1;
+    uav_data.assign_array_[2] = 2;
+    uav_data.assign_array_[3] = 3;
+    uav_data.assign_array_[4] = 4;
+    uav_data.assign_array_[5] = 3;
+    uav_data.assign_array_[6] = 2;
+    uav_data.assign_array_[7] = 1;
+    uav_data.assign_array_[8] = 0;
 
     static double write_time;
-    std::cout << "write period: " <<  ros::Time().now().sec + ros::Time().now().nsec / 1e9 - write_time << " [s]" << std::endl;
+    // std::cout << "write period: " <<  ros::Time().now().sec + ros::Time().now().nsec / 1e9 - write_time << " [s]" << std::endl;
     write_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
 
-    XbeeFrameWrite(&UavData, 0);    //往0号无人机发送
-    XbeeFrameWrite(&UavData, 4);    //往4号无人机发送
+    for(int i=0; i<5; i++)
+    {
+        if(send_uav_mask_ & (0b00000001 << i))
+            XbeeFrameWrite(&uav_data, i);
+    }
+
+}
+
+void XbeePro::UavPositionCallback(const geometry_msgs::PoseStamped::ConstPtr& _msg)
+{
+    local_position_uav_.x = _msg->pose.position.x;
+    local_position_uav_.y = _msg->pose.position.y;
+    local_position_uav_.z = _msg->pose.position.z;
 }
 
 void XbeePro::CyclicRdWr(void)
 {
-    lddddd::CommunicationData CooperationData;
+    lddddd::CommunicationData reception_data;
 
-    XbeeFrameRead(&CooperationData);
-
+    XbeeFrameRead(&reception_data);
+    communication_data_[reception_data.uav_id_].pos_uav_[0] = reception_data.pos_uav_[0];
+    communication_data_[reception_data.uav_id_].pos_uav_[1] = reception_data.pos_uav_[1];
+    communication_data_[reception_data.uav_id_].pos_uav_[2] = reception_data.pos_uav_[2];
     ros::spinOnce();
 }
 
 void XbeePro::CyclicRead(void)
 {
-    lddddd::CommunicationData CooperationData;
+    lddddd::CommunicationData reception_data;
 
-    XbeeFrameRead(&CooperationData);
+    XbeeFrameRead(&reception_data);
+    communication_data_[reception_data.uav_id_].pos_uav_[0] = reception_data.pos_uav_[0];
+    communication_data_[reception_data.uav_id_].pos_uav_[1] = reception_data.pos_uav_[1];
+    communication_data_[reception_data.uav_id_].pos_uav_[2] = reception_data.pos_uav_[2];
 }
 
 void XbeePro::CyclicSpin(void)
@@ -202,7 +223,7 @@ void XbeePro::TaskRun(void)
     (this->*FunctionPointer_)();
 }
 
-void XbeePro::XbeeFrameWrite(const CommunicationData* _data, const int _uav_dest_id)
+void XbeePro::XbeeFrameWrite(const CommunicationData* _data, int _uav_dest_id)
 {
     unsigned char data_buf[100] = {0};
     int frame_length = 58;//固定长度frame_length~check_sum
@@ -341,13 +362,14 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
             _data->assign_array_[7] = (data_buf[54] & (unsigned char)0x07);
 
             _data->assign_array_[8] = ((data_buf[53] & (unsigned char)(0x06 << 6)) >> 6) | ((data_buf[54] & (unsigned char)(0x01 << 7)) >> 7);
+            
+            // std::cout << *_data << std::endl;
 
-            std::cout << *_data << std::endl;
+
+            static int receive_count;
             static double read_time;
             static double read_period;
-            static int receive_count;
-
-            if(_data->uav_id_ == 0)
+            if(_data->uav_id_ == 2)
             {
                 read_period = ros::Time().now().sec + ros::Time().now().nsec / 1e9 - read_time;
                 read_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
@@ -366,19 +388,23 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
     }
 }
 
-XbeePro::XbeePro(const std::string _name, const int _baud_rate, Mode _mode, const ros::NodeHandle& _nh) : Serial(_name, _baud_rate), nh_(_nh),
-                                                                                                        xbee_address_
-                                                                                                        {
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x62},//   0
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x64},//   1
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68},//   2
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x6A},//   3
-                                                                                                            {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x77} //   4
-                                                                                                        }
+XbeePro::XbeePro(Mode _mode, const ros::NodeHandle& _nh) : nh_(_nh),
+                                                            xbee_address_
+                                                            {
+                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x62},//   0
+                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x64},//   1
+                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68},//   2
+                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x6A},//   3
+                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x77} //   4
+                                                            }
 {
     double period;
-    nh_.param("/read_period", period, 0.1);
+    nh_.param<double>("/read_period", period, 0.3);
+    nh_.param<std::string>("/port_name", port_name_, "/dev/ttyUSB0");
+    nh_.param<int>("/baud_rate", baud_rate_, 230400);
 
+    nh_.param<int>("/own_uav_id", own_uav_id_, 0);
+    nh_.param<int>("/send_uav_mask", send_uav_mask_, 0b00011110);
     switch(_mode)
     {
         case(RDWR):
@@ -403,6 +429,11 @@ XbeePro::XbeePro(const std::string _name, const int _baud_rate, Mode _mode, cons
             break;
         }
     }
+    uav_local_position_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose",
+                                                                         1,
+                                                                          &lddddd::XbeePro::UavPositionCallback,
+                                                                           this,
+                                                                            ros::TransportHints().tcpNoDelay());
 }
 
 XbeePro::~XbeePro()

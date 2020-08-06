@@ -25,27 +25,32 @@
 #include <string>
 #include <numeric>
 #include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <mavros_msgs/PositionTarget.h>
 
 namespace lddddd
 {
 class Serial
 {
 public:
-  Serial(const std::string _name, const int _baud_rate);
+  // Serial(std::string _name, int _baud_rate);
+  Serial();
   ~Serial();
   void ClosePort();
-  bool DataWrite(const unsigned char* _buf, const int _nWrite);
-  bool DataRead(unsigned char* _buf, const int _nRead);
-private:
+  bool DataWrite(const unsigned char* _buf, int _nWrite);
+  bool DataRead(unsigned char* _buf, int _nRead);
+protected:
   std::string port_name_;
   int baud_rate_;
+private:
   int serial_;
 };
 
-Serial::Serial(const std::string _name, const int _baud_rate) :
-  port_name_(_name), baud_rate_(_baud_rate)
+// Serial::Serial(std::string _name, int _baud_rate) :
+//   port_name_(_name), baud_rate_(_baud_rate)
+Serial::Serial()
 {
-  serial_ = open(_name.c_str(), O_RDWR /*| O_NONBLOCK*/);
+  serial_ = open(port_name_.c_str(), O_RDWR /*| O_NONBLOCK*/);
   if(serial_ == -1)
   {
     ROS_ERROR_STREAM("Failed to open serial port!");
@@ -60,7 +65,7 @@ Serial::Serial(const std::string _name, const int _baud_rate) :
   tcflush(serial_, TCIFLUSH);//        TCIFLUSH      清空输入队列
                              //         TCOFLUSH     清空输出队列
                              //         TCIOFLUSH    同时清空输入和输出队列
-  switch(_baud_rate)
+  switch(baud_rate_)
   {
     case 921600:
       cfsetispeed(&options, B921600);
@@ -130,7 +135,7 @@ Serial::~Serial()
 
 }
 
-bool Serial::DataRead(unsigned char* _buf, const int _nRead)
+bool Serial::DataRead(unsigned char* _buf, int _nRead)
 {
   int total = 0, ret = 0;
 
@@ -146,7 +151,7 @@ bool Serial::DataRead(unsigned char* _buf, const int _nRead)
   return true;
 }
 
-bool Serial::DataWrite(const unsigned char* _buf, const int _nWrite)
+bool Serial::DataWrite(const unsigned char* _buf, int _nWrite)
 {
   int total = 0, ret = 0;
 
