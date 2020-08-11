@@ -1,5 +1,6 @@
 read_period: 0.3
 port_name: "/dev/ttyUSB0"
-baud_rate: 230400
-own_uav_id: 0    #自身无人机编号
-send_uav_mask: 0b00011110   #往1 2 3 4 无人机发送
+#baud_rate: 230400
+baud_rate: 9600
+own_uav_id: 1    #自身无人机编号
+send_uav_mask: 0b00000001   #往0 无人机发送

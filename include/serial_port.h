@@ -36,6 +36,7 @@ public:
   // Serial(std::string _name, int _baud_rate);
   Serial();
   ~Serial();
+  void Initialize();
   void ClosePort();
   bool DataWrite(const unsigned char* _buf, int _nWrite);
   bool DataRead(unsigned char* _buf, int _nRead);
@@ -46,9 +47,17 @@ private:
   int serial_;
 };
 
-// Serial::Serial(std::string _name, int _baud_rate) :
-//   port_name_(_name), baud_rate_(_baud_rate)
 Serial::Serial()
+{
+
+}
+
+Serial::~Serial()
+{
+
+}
+
+void Serial::Initialize()
 {
   serial_ = open(port_name_.c_str(), O_RDWR /*| O_NONBLOCK*/);
   if(serial_ == -1)
@@ -128,11 +137,6 @@ Serial::Serial()
     ROS_ERROR_STREAM("Can't set serial port options!");
     exit(0);
   }
-}
-
-Serial::~Serial()
-{
-
 }
 
 bool Serial::DataRead(unsigned char* _buf, int _nRead)

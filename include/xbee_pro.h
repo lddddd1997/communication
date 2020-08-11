@@ -369,7 +369,7 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
             static int receive_count;
             static double read_time;
             static double read_period;
-            if(_data->uav_id_ == 2)
+            if(_data->uav_id_ == 0)
             {
                 read_period = ros::Time().now().sec + ros::Time().now().nsec / 1e9 - read_time;
                 read_time = ros::Time().now().sec + ros::Time().now().nsec / 1e9;
@@ -391,20 +391,27 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 XbeePro::XbeePro(Mode _mode, const ros::NodeHandle& _nh) : nh_(_nh),
                                                             xbee_address_
                                                             {
-                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x62},//   0
-                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x64},//   1
+                                                                // {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x62},//   0
+                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0xBB, 0x67, 0xB2},//   0
+                                                                // {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x64},//   1
+                                                                {0x00, 0x13, 0xA2, 0x00, 0x41, 0xBB, 0x6A, 0x30},//   1
                                                                 {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x68},//   2
                                                                 {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x6A},//   3
                                                                 {0x00, 0x13, 0xA2, 0x00, 0x41, 0x5A, 0xB7, 0x77} //   4
                                                             }
 {
     double period;
-    nh_.param<double>("/read_period", period, 0.3);
-    nh_.param<std::string>("/port_name", port_name_, "/dev/ttyUSB0");
-    nh_.param<int>("/baud_rate", baud_rate_, 230400);
+    ros::NodeHandle nh;
+    nh.param<double>("read_period", period, 0.3);
+    nh.param<std::string>("port_name", port_name_, "/dev/ttyUSB0");
+    nh.param<int>("baud_rate", baud_rate_, 230400);
 
-    nh_.param<int>("/own_uav_id", own_uav_id_, 0);
-    nh_.param<int>("/send_uav_mask", send_uav_mask_, 0b00011110);
+    nh.param<int>("own_uav_id", own_uav_id_, 0);
+    nh.param<int>("send_uav_mask", send_uav_mask_, 0b00011110);
+    std::cout << "---------------Parameters-------------"<< std::endl;
+    std::cout << "port name : "<< port_name_ << std::endl;
+    std::cout << "baud rate : "<< baud_rate_ << std::endl;
+    Initialize();
     switch(_mode)
     {
         case(RDWR):
