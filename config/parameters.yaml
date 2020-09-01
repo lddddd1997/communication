@@ -1,4 +1,4 @@
-read_period: 0.3
+read_period: 0.15
 port_name: "/dev/ttyUSB0"
 #baud_rate: 230400
 baud_rate: 9600

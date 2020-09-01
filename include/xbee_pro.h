@@ -297,7 +297,7 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
             {
                 if(DataRead(data_buf, 3))
                 {
-                    if(data_buf[0] == 0x00 && data_buf[2] == 0x91)
+                    if(data_buf[0] == 0x00 && data_buf[2] == 0x91)    //91为模块API接口设置
                     {
                         frame_length = data_buf[1];
                         break;
@@ -363,7 +363,7 @@ void XbeePro::XbeeFrameRead(CommunicationData* _data)
 
             _data->assign_array_[8] = ((data_buf[53] & (unsigned char)(0x06 << 6)) >> 6) | ((data_buf[54] & (unsigned char)(0x01 << 7)) >> 7);
             
-            // std::cout << *_data << std::endl;
+            std::cout << *_data << std::endl;
 
 
             static int receive_count;
